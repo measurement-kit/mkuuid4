@@ -27,7 +27,7 @@
 // Derivative work of LibreSSL's getentropy_win.c:
 //	$OpenBSD: getentropy_win.c,v 1.5 2016/08/07 03:27:21 tb Exp $	*/
 //
-// Copyright (c) 2014, Theo de Raadt <deraadt@openbsd.org> 
+// Copyright (c) 2014, Theo de Raadt <deraadt@openbsd.org>
 // Copyright (c) 2014, Bob Beck <beck@obtuse.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
