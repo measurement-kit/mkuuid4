@@ -45,6 +45,7 @@ std::string gen() noexcept;
 #include <stdint.h>
 
 #include <iomanip>
+#include <random>
 #include <sstream>
 
 namespace mk {
@@ -70,9 +71,9 @@ std::string UUID::str() const noexcept {
   std::stringstream ss;
   ss << std::hex << std::nouppercase << std::setfill('0');
 
-  uint32_t a = (ab >> 32);
+  uint32_t a = (uint32_t)((ab >> 32) & 0xFFFFFFFF);
   uint32_t b = (ab & 0xFFFFFFFF);
-  uint32_t c = (cd >> 32);
+  uint32_t c = (uint32_t)((cd >> 32) & 0xFFFFFFFF);
   uint32_t d = (cd & 0xFFFFFFFF);
 
   ss << std::setw(8) << (a) << '-';
@@ -89,7 +90,7 @@ std::string UUID::str() const noexcept {
 static UUID uuid4() noexcept {
   std::random_device rd;
   std::uniform_int_distribution<uint64_t> dist(0, (uint64_t)(~0));
-  uuid my;
+  UUID my;
 
   my.ab = dist(rd);
   my.cd = dist(rd);
