@@ -1,0 +1,19 @@
+name: mkuuid4
+
+docker: bassosimone/mk-debian
+
+dependencies:
+- github.com/catchorg/catch2
+
+targets:
+  libraries:
+    mkuuid4:
+      compile: [mkuuid4.cpp]
+  executables:
+    unit-tests:
+      compile: [unit-tests.cpp]
+      link: [mkuuid4]
+
+tests:
+  unit_tests:
+    command: unit-tests
