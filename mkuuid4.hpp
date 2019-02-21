@@ -23,6 +23,24 @@
 // misrepresented as being the original software.
 //
 // 3. This notice may not be removed or altered from any source distribution.
+// =============================================================
+// Derivative work of LibreSSL's getentropy_win.c:
+//	$OpenBSD: getentropy_win.c,v 1.5 2016/08/07 03:27:21 tb Exp $	*/
+//
+// Copyright (c) 2014, Theo de Raadt <deraadt@openbsd.org> 
+// Copyright (c) 2014, Bob Beck <beck@obtuse.com>
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef MEASUREMENT_KIT_MKUUID4_HPP
 #define MEASUREMENT_KIT_MKUUID4_HPP
 
@@ -34,8 +52,8 @@ namespace uuid4 {
 /// gen generates a new uuid4 as a string.
 std::string gen() noexcept;
 
-} // namespace uuid4
-} // namespace mk
+}  // namespace uuid4
+}  // namespace mk
 
 // If you just want to know about the API, you can stop reading here. What
 // follows is the inline implementation of the library. By default it is not
@@ -49,8 +67,7 @@ std::string gen() noexcept;
 #include <sstream>
 
 #ifdef __MINGW32__
-#include <bcrypt.h>
-#include <ntstatus.h>
+#include <wincrypt.h>
 #endif  // __MINGW32__
 
 namespace mk {
@@ -106,12 +123,23 @@ class MingwRandomDevice {
 
   static constexpr result_type max() { return UINT64_MAX; }
 
+  // Implementation note: a previous version of this code used bcrypt.h
+  // but it's unclear whether that works well on Vista. So, let's use
+  // the older, deprecated, but more widely available Wincrypt API.
   result_type operator()() {
     result_type buffer = {};
-    auto result = BCryptGenRandom(nullptr, (PUCHAR)&buffer, sizeof(buffer),
-                                  BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-    if (result != STATUS_SUCCESS) {
-      throw std::runtime_error("BCryptGenRandom failed");
+    HCRYPTPROV prov{};
+    // PROV_RSA_FULL is a general purpose provider and CRYPT_VERIFYCONTEXT
+    // should be specified by all apps that don't access to a privkey (thus
+    // we're in the context of just performing verification).
+    if (!CryptAcquireContext(&prov, nullptr, nullptr, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT)) {
+      throw std::runtime_error("CryptAcquireContext failed");
+    }
+    auto ok = CryptGenRandom(prov, (DWORD)sizeof(buffer), (BYTE *)&buffer);
+    (void)CryptReleaseContext(prov, 0);  // flags MUST be zero
+    if (!ok) {
+      throw std::runtime_error("CryptGenRandom failed");
     }
     return buffer;
   }
