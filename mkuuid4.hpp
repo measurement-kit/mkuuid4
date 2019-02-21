@@ -67,6 +67,7 @@ std::string gen() noexcept;
 #include <sstream>
 
 #ifdef __MINGW32__
+#include <windows.h>
 #include <wincrypt.h>
 #endif  // __MINGW32__
 
