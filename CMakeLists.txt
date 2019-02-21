@@ -22,9 +22,6 @@ list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
 
 if(("${WIN32}"))
   list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32 crypt32)
-  if(("${MINGW}"))
-    list(APPEND CMAKE_REQUIRED_LIBRARIES -static-libgcc -static-libstdc++)
-  endif()
 endif()
 
 enable_testing()
@@ -46,9 +43,9 @@ endif()
 message(STATUS "mkdirAll: ${CMAKE_BINARY_DIR}/.mkbuild/include")
 execute_process(COMMAND
   ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/.mkbuild/include"
-  RESULT_VARIABLE FAILURE_1159)
-if("${FAILURE_1159}")
-  message(FATAL_ERROR "${FAILURE_1159}")
+  RESULT_VARIABLE FAILURE_1055)
+if("${FAILURE_1055}")
+  message(FATAL_ERROR "${FAILURE_1055}")
 endif()
 message(STATUS "download: https://github.com/catchorg/Catch2/releases/download/v2.3.0/catch.hpp")
 file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.3.0/catch.hpp
@@ -56,8 +53,8 @@ file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.3.0/catch.
   EXPECTED_HASH SHA256=5eb8532fd5ec0d28433eba8a749102fd1f98078c5ebf35ad607fb2455a000004
   TLS_VERIFY ON)
 LIST(APPEND CMAKE_REQUIRED_INCLUDES "${CMAKE_BINARY_DIR}/.mkbuild/include")
-CHECK_INCLUDE_FILE_CXX("catch.hpp" MK_HAVE_HEADER_1676)
-if(NOT ("${MK_HAVE_HEADER_1676}"))
+CHECK_INCLUDE_FILE_CXX("catch.hpp" MK_HAVE_HEADER_1572)
+if(NOT ("${MK_HAVE_HEADER_1572}"))
   message(FATAL_ERROR "cannot find: catch.hpp")
 endif()
 
@@ -101,6 +98,8 @@ macro(MKSetRestrictiveCompilerFlags)
       set(MK_LD_FLAGS "${MK_LD_FLAGS} -Wl,-z,relro")
       set(MK_LD_FLAGS "${MK_LD_FLAGS} -Wl,-z,nodlopen")
       set(MK_LD_FLAGS "${MK_LD_FLAGS} -Wl,-z,nodump")
+    elseif(("${MINGW}"))
+      set(MK_LD_FLAGS "${MK_LD_FLAGS} -static")
     endif()
     add_definitions(-D_FORTIFY_SOURCES=2)
   elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
