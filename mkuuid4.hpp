@@ -120,7 +120,7 @@ class MingwRandomDevice {
 
 // uuid4 generates a UUID4 UUID
 static UUID uuid4() noexcept {
-  std::uniform_int_distribution<uint64_t> dist{0, (uint64_t)(~0)};
+  std::uniform_int_distribution<uint64_t> dist{0, UINT64_MAX};
   UUID my;
 
 #ifdef __MINGW32__
