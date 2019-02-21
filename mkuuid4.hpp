@@ -48,6 +48,11 @@ std::string gen() noexcept;
 #include <random>
 #include <sstream>
 
+#ifdef __MINGW32__
+#include <bcrypt.h>
+#include <ntstatus.h>
+#endif  // __MINGW32__
+
 namespace mk {
 namespace uuid4 {
 
@@ -86,11 +91,43 @@ std::string UUID::str() const noexcept {
   return ss.str();
 }
 
+// With mingw the random device is not actually random. So, let's make
+// a class having the same behaviour of `std::random_device` and let us
+// use Windows crypto API to return proper entropy.
+//
+// See <https://stackoverflow.com/questions/18880654> and
+//   <https://en.cppreference.com/w/cpp/numeric/random/random_device>.
+#ifdef __MINGW32__
+class MingwRandomDevice {
+ public:
+  using result_type = uint64_t;
+
+  static constexpr result_type min() { return 0; }
+
+  static constexpr result_type max() { return UINT64_MAX; }
+
+  result_type operator()() {
+    result_type buffer = {};
+    auto result = BCryptGenRandom(nullptr, (PUCHAR)&buffer, sizeof(buffer),
+                                  BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    if (result != STATUS_SUCCESS) {
+      throw std::runtime_error("BCryptGenRandom failed");
+    }
+    return buffer;
+  }
+};
+#endif  // __MINGW32__
+
 // uuid4 generates a UUID4 UUID
 static UUID uuid4() noexcept {
-  std::random_device rd;
-  std::uniform_int_distribution<uint64_t> dist(0, (uint64_t)(~0));
+  std::uniform_int_distribution<uint64_t> dist{0, (uint64_t)(~0)};
   UUID my;
+
+#ifdef __MINGW32__
+  MingwRandomDevice rd;
+#else
+  std::random_device rd;
+#endif  // __MINGW32__
 
   my.ab = dist(rd);
   my.cd = dist(rd);
